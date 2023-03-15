@@ -1,6 +1,6 @@
 if __name__ == '__main__':
-    import multiprocessing
-    multiprocessing.freeze_support()
+    #import multiprocessing
+    #multiprocessing.freeze_support()
 
     import torch
     import torchvision
@@ -20,17 +20,23 @@ if __name__ == '__main__':
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # Set batch size
-    batch_size = 4
+    batch_size = 50
+    epoch_num=4
+    disp_interval=200
+
+    folder_path = './CV2023_HW3B'
+    model_path = '/cifar_net_N1.pth'
+
 
     # Load training set
     trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=transform)
+        root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
     # Load test set
     testset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, download=True, transform=transform)
+        root=folder_path+'/CIFAR10_data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(
         testset, batch_size=batch_size, shuffle=False, num_workers=2)
 
@@ -84,7 +90,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
     # Train the neural network
-    for epoch in range(1):  # loop over the dataset multiple times
+    for epoch in range(epoch_num):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
@@ -103,15 +109,15 @@ if __name__ == '__main__':
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
+            if i % disp_interval == disp_interval-1:    # print every 2000 mini-batches
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                 running_loss = 0.0
 
     print('Finished Training')
 
     # Save the trained model
-    PATH = './cifar_net.pth'
-    torch.save(net.state_dict(), PATH)
+
+    torch.save(net.state_dict(), model_path)
 
     # Display test images and labels
     dataiter = iter(testloader)
@@ -123,7 +129,7 @@ if __name__ == '__main__':
 
     # Load the trained model and predict on test data
     net = Net().to(device)
-    net.load_state_dict(torch.load(PATH))
+    net.load_state_dict(torch.load(model_path))
     outputs = net(images)
     _, predicted = torch.max(outputs, 1)
 
