@@ -14,20 +14,18 @@ if __name__ == '__main__':
         transforms.RandomHorizontalFlip(),
         transforms.RandomCrop(32, padding=4),
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     transform_test = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    batch_size = 50
+    batch_size = 100
     epoch_num = 20
-    disp_interval = 200
+    disp_interval = 4000/batch_size
 
     folder_path = './CV2023_HW3B'
-    model_path = '/cifar_net_N4.pth'
+    model_path = folder_path+'/cifar_net_N4.pth'
 
     trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform_train)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -49,13 +47,13 @@ if __name__ == '__main__':
     class Net(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(3, 32, 3, padding=1)
+            self.conv1 = nn.Conv2d(3, 32, 5, padding=2)
             self.bn1 = nn.BatchNorm2d(32)
-            self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
+            self.conv2 = nn.Conv2d(32, 64, 5, padding=2)
             self.bn2 = nn.BatchNorm2d(64)
-            self.conv3 = nn.Conv2d(64, 128, 3, padding=1)
+            self.conv3 = nn.Conv2d(64, 128, 5, padding=2)
             self.bn3 = nn.BatchNorm2d(128)
-            self.conv4 = nn.Conv2d(128, 256, 3, padding=1)
+            self.conv4 = nn.Conv2d(128, 256, 5, padding=2)
             self.bn4 = nn.BatchNorm2d(256)
             self.pool = nn.MaxPool2d(2, 2)
             self.dropout = nn.Dropout(0.5)

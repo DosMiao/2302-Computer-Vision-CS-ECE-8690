@@ -26,7 +26,7 @@ if __name__ == '__main__':
     disp_interval=200
 
     folder_path = './CV2023_HW3B'
-    model_path = '/cifar_net_N1.pth'
+    model_path = folder_path+'/cifar_net_N1.pth'
 
 
     # Load training set
