@@ -22,18 +22,19 @@ if __name__ == '__main__':
     epoch_num=4
     disp_interval=200
 
-    PATH = './cifar_net_N2.pth'
+    folder_path = './CV2023_HW3B'
+    model_path = '/cifar_net_N4.pth'
 
 
     # Load training set
     trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=transform)
+        root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
     # Load test set
     testset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, download=True, transform=transform)
+        root=folder_path+'/CIFAR10_data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(
         testset, batch_size=batch_size, shuffle=False, num_workers=2)
 
@@ -113,7 +114,7 @@ if __name__ == '__main__':
 
         print('Finished Training')
         # Save the trained model
-        torch.save(net.state_dict(), PATH)
+        torch.save(net.state_dict(), model_path)
 
     # Display test images and labels
     dataiter = iter(testloader)
@@ -125,7 +126,7 @@ if __name__ == '__main__':
 
     # Load the trained model and predict on test data
     net = Net().to(device)
-    net.load_state_dict(torch.load(PATH))
+    net.load_state_dict(torch.load(model_path))
     outputs = net(images)
     _, predicted = torch.max(outputs, 1)
 
