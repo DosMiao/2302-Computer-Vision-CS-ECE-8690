@@ -1,4 +1,4 @@
-
+#pylint disable all
 if __name__ == '__main__':    
     import torch
     import torchvision
