@@ -19,11 +19,11 @@ if __name__ == '__main__':
 
     # Set batch size
     batch_size = 50
-    epoch_num = 20
+    epoch_num = 5
     disp_interval = 2000/batch_size
 
     folder_path = './CV2023_HW3B'
-    model_path = folder_path+'/cifar_net_N2.pth'
+    model_path = folder_path+'/cifar_net_N3.pth'
 
 
     # Load training set
