@@ -7,6 +7,7 @@ if __name__ == '__main__':
     from torch import optim, nn
     import matplotlib.pyplot as plt
     import numpy as np
+    import os
 
 
     # Check if CUDA is available, else use CPU
@@ -75,7 +76,7 @@ if __name__ == '__main__':
             return x
 
 
-    if 1:
+    if ~os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
@@ -110,7 +111,7 @@ if __name__ == '__main__':
 
         print('Finished Training')
         # Save the trained model
-        torch.save(net.state_dict(), PATH)
+        torch.save(net.state_dict(), model_path)
 
     # Display test images and labels
     dataiter = iter(testloader)
@@ -122,7 +123,7 @@ if __name__ == '__main__':
 
     # Load the trained model and predict on test data
     net = Net().to(device)
-    net.load_state_dict(torch.load(PATH))
+    net.load_state_dict(torch.load(model_path))
     outputs = net(images)
     _, predicted = torch.max(outputs, 1)
 

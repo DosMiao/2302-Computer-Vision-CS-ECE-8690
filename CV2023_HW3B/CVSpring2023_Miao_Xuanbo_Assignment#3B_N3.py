@@ -7,6 +7,7 @@ if __name__ == '__main__':
     from torch import optim, nn
     import matplotlib.pyplot as plt
     import numpy as np
+    import os
 
 
     # Check if CUDA is available, else use CPU
@@ -81,7 +82,7 @@ if __name__ == '__main__':
             return x
 
 
-    if 1:
+    if ~os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 

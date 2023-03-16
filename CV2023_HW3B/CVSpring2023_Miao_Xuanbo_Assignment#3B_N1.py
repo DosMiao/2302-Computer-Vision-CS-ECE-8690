@@ -1,8 +1,6 @@
 #pylint disable all
 if __name__ == '__main__':
-    #import multiprocessing
-    #multiprocessing.freeze_support()
-
+    import os
     import torch
     import torchvision
     from torchvision import transforms
@@ -82,43 +80,41 @@ if __name__ == '__main__':
             x = F.relu(self.fc2(x))
             x = self.fc3(x)
             return x
+    if os.path.exists(model_path):
+        # Instantiate the neural network and move it to GPU
+        net = Net().to(device)
 
-    # Instantiate the neural network and move it to GPU
-    net = Net().to(device)
+        # Define the loss function and optimizer
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-    # Define the loss function and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        # Train the neural network
+        for epoch in range(epoch_num):  # loop over the dataset multiple times
 
-    # Train the neural network
-    for epoch in range(epoch_num):  # loop over the dataset multiple times
+            running_loss = 0.0
+            for i, data in enumerate(trainloader, 0):
+                # get the inputs; data is a list of [inputs, labels]
+                inputs, labels = data
+                inputs, labels = inputs.to(device), labels.to(device)
 
-        running_loss = 0.0
-        for i, data in enumerate(trainloader, 0):
-            # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
+                # zero the parameter gradients
+                optimizer.zero_grad()
 
-            # zero the parameter gradients
-            optimizer.zero_grad()
+                # forward + backward + optimize
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            # forward + backward + optimize
-            outputs = net(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+                # print statistics
+                running_loss += loss.item()
+                if i % disp_interval == disp_interval-1:    # print every 2000 mini-batches
+                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+                    running_loss = 0.0
 
-            # print statistics
-            running_loss += loss.item()
-            if i % disp_interval == disp_interval-1:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-                running_loss = 0.0
-
-    print('Finished Training')
-
-    # Save the trained model
-
-    torch.save(net.state_dict(), model_path)
+        print('Finished Training')    
+        # Save the trained model
+        torch.save(net.state_dict(), model_path)
 
     # Display test images and labels
     dataiter = iter(testloader)
