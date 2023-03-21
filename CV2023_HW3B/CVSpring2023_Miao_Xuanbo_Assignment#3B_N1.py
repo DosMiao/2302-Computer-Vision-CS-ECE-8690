@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     # Check if CUDA is available, else use CPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = torch.device('cpu')
+    print(f"Using device: {device}")
 
     # Define image transformations
     transform = transforms.Compose(
@@ -23,6 +23,10 @@ if __name__ == '__main__':
     epoch_num = 4
     disp_interval = 4000/batch_size
     batch_size_show = 8
+
+    if batch_size<5:
+        device = torch.device('cpu')
+        print(f"Change to use device: {device}"+" because batch size is too small")
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N1_cifar_net.pth'
