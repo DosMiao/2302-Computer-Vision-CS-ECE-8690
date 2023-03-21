@@ -27,7 +27,7 @@ if __name__ == '__main__':
     batch_size_show = 8
 
     if batch_size<5:
-        device = torch.device('cpu')
+        device = torch.device('cpu' and device=='cpu')
         print(f"Change to use device: {device}"+" because batch size is too small")
 
     folder_path = './CV2023_HW3B/'

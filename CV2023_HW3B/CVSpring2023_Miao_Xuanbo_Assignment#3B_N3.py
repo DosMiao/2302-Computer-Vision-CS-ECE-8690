@@ -25,7 +25,7 @@ if __name__ == '__main__':
     disp_interval = batch_size*50
     batch_size_show = 8
 
-    if batch_size<5:
+    if batch_size<5 and device=='cpu':
         device = torch.device('cpu')
         print(f"Change to use device: {device}"+" because batch size is too small")
 
