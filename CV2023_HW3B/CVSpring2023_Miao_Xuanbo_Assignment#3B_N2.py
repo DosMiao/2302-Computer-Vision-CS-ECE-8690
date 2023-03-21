@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     if batch_size<10:
         disp_interval*=2
-        
+
         if device!='cpu':
             device = torch.device('cpu')
             print(f"Change to use device: {device}"+" because batch size is too small")
@@ -37,8 +37,8 @@ if __name__ == '__main__':
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N2_cifar_net.pth'
     img1_path  = folder_path+'N2_img1.png'
-    img2_path  = folder_path+'N2_img2.png'
-
+    img2_path  = folder_path+'N1_img2.png'
+    img3_path  = folder_path+'N1_img3.png'
 
     trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -71,6 +71,15 @@ if __name__ == '__main__':
         plt.title(f'Loss History - Epoch: {epoch + 1}, Batch: {i + 1}')
         plt.pause(0.001)
         plt.clf()
+
+    def plot_loss_save(loss_history, epoch, i, img_path):
+        plt.figure()
+        plt.plot(loss_history)
+        plt.xlabel('Iteration')
+        plt.ylabel('Loss')
+        plt.title(f'Epoch {epoch + 1}, Iteration {i + 1}')
+        plt.savefig(img_path)
+        plt.close()
 
     # Define the neural network
     class Net(nn.Module):
@@ -142,6 +151,8 @@ if __name__ == '__main__':
         end_time = time.time()  # Record the end time
         total_training_time = end_time - start_time  # Calculate the elapsed time
         print(f'Total training time: {total_training_time:.2f} seconds')
+
+        plot_loss_save(loss_history, epoch, i, img2_path)
 
         # Save the trained model
         torch.save(net.state_dict(), model_path)
@@ -224,7 +235,7 @@ if __name__ == '__main__':
 
     ax.set_xlabel('Predicted')
     ax.set_ylabel('True')
-    plt.savefig(img2_path)
+    plt.savefig(img3_path)
     plt.show(block=False)   # show the image without blocking the code
     plt.pause(2)            # pause the code execution for 1 second
     plt.close()             # close the image
