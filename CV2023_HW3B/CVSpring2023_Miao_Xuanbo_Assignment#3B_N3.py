@@ -24,10 +24,10 @@ if __name__ == '__main__':
     disp_interval = 4000/batch_size
     batch_size_show = 8
 
-    folder_path = './CV2023_HW3B/cifar_net_N3'
-    model_path = folder_path+'.pth'
-    img1_path  = folder_path+'_img1.png'
-    img2_path  = folder_path+'_img2.png'
+    folder_path = './CV2023_HW3B/'
+    model_path = folder_path+'N3_cifar_net.pth'
+    img1_path  = folder_path+'N3_img1.png'
+    img2_path  = folder_path+'N3_img2.png'
 
 
     # Load training set
@@ -87,7 +87,7 @@ if __name__ == '__main__':
             return x
 
 
-    if 1: #~os.path.exists(model_path):
+    if not os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
@@ -172,7 +172,7 @@ if __name__ == '__main__':
             for label, prediction in zip(labels, predictions):
                 if label == prediction:
                     correct_pred[classes[label]] += 1
-                    total_pred[classes[label]] += 1
+                total_pred[classes[label]] += 1
     # print accuracy for each class
     for classname, correct_count in correct_pred.items():
         accuracy = 100 * float(correct_count) / total_pred[classname]
