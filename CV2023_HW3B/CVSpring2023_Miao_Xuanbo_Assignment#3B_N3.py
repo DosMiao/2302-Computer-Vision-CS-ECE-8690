@@ -21,13 +21,13 @@ if __name__ == '__main__':
     # Set batch size
     batch_size = 40
     epoch_num = 4
-    disp_interval = 4000/batch_size
+    disp_interval = batch_size*50
     batch_size_show = 8
 
     if batch_size<5:
         device = torch.device('cpu')
         print(f"Change to use device: {device}"+" because batch size is too small")
-        
+
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N3_cifar_net.pth'
     img1_path  = folder_path+'N3_img1.png'
@@ -68,6 +68,13 @@ if __name__ == '__main__':
         plt.pause(2)            # pause the code execution for 1 second
         plt.close()             # close the image
 
+    def plot_loss(loss_history, epoch, i):
+        plt.plot(loss_history)
+        plt.xlabel('Batch')
+        plt.ylabel('Loss')
+        plt.title(f'Loss History - Epoch: {epoch + 1}, Batch: {i + 1}')
+        plt.pause(0.001)
+        plt.clf()
 
     # Define the neural network
     class Net(nn.Module):
@@ -98,7 +105,9 @@ if __name__ == '__main__':
         # Define the loss function and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        #optimizer = optim.Adam(net.parameters(), lr=0.001)
 
+        loss_history = []
         # Train the neural network
         for epoch in range(epoch_num):  # loop over the dataset multiple times
 
@@ -120,8 +129,10 @@ if __name__ == '__main__':
 
                 # print statistics
                 running_loss += loss.item()
-                if i % disp_interval == disp_interval-1:    # print every 2000 mini-batches
-                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+                if i % disp_interval == disp_interval-1:    # print every disp_interval mini-batches
+                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / disp_interval:.3f}')
+                    loss_history.append(running_loss / disp_interval)
+                    plot_loss(loss_history, epoch, i)
                     running_loss = 0.0
 
         print('Finished Training')
