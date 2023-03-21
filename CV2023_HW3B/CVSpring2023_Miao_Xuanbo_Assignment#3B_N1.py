@@ -40,7 +40,7 @@ if __name__ == '__main__':
     classes = ('plane', 'car', 'bird', 'cat', 'deer','dog', 'frog', 'horse', 'ship', 'truck')
 
     # Function to display images
-    def imshow(img, save_path=None):
+    def im_show(img, save_path=None):
         img = img.cpu()
         img = img / 2 + 0.5     # unnormalize
         npimg = img.numpy()

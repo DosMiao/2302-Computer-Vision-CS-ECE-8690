@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # Define classes
     classes = ('cat', 'car', 'frog', 'other')
 
-    def imshow(img, save_path=None):
+    def im_show(img, save_path=None):
         img = img.cpu()
         img = img / 2 + 0.5     # unnormalize
         npimg = img.numpy()
