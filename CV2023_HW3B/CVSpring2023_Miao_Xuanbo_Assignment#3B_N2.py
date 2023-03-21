@@ -19,36 +19,37 @@ if __name__ == '__main__':
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # Set batch size
-    batch_size = 50
-    epoch_num=4
-    disp_interval=200
+    batch_size = 40
+    epoch_num = 5
+    disp_interval = 4000/batch_size
+    batch_size_show = 8
 
-    folder_path = './CV2023_HW3B'
-    model_path = folder_path+'/cifar_net_N2.pth'
+    folder_path = './CV2023_HW3B/cifar_net_N2'
+    model_path = folder_path+'.pth'
+    img1_path  = folder_path+'_img1.png'
+    img2_path  = folder_path+'_img2.png'
 
 
-    # Load training set
-    trainset = torchvision.datasets.CIFAR10(
-        root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+    trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-    # Load test set
-    testset = torchvision.datasets.CIFAR10(
-        root=folder_path+'/CIFAR10_data', train=False, download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(
-        testset, batch_size=batch_size, shuffle=False, num_workers=2)
+    testset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=False, download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+    testloader_show = torch.utils.data.DataLoader(testset, batch_size=batch_size_show, shuffle=False, num_workers=2)
 
     # Define classes
     classes = ('plane', 'car', 'bird', 'cat', 'deer',
             'dog', 'frog', 'horse', 'ship', 'truck')
     
 
-    def imshow(img):
+    def im_show(img, save_path=None):
         img = img.cpu()
         img = img / 2 + 0.5     # unnormalize
         npimg = img.numpy()
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
+        if save_path is not None:
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            plt.savefig(save_path)
         plt.show(block=False)   # show the image without blocking the code
         plt.pause(2)            # pause the code execution for 1 second
         plt.close()             # close the image
@@ -76,7 +77,7 @@ if __name__ == '__main__':
             return x
 
 
-    if ~os.path.exists(model_path):
+    if 1: #~os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
@@ -114,12 +115,12 @@ if __name__ == '__main__':
         torch.save(net.state_dict(), model_path)
 
     # Display test images and labels
-    dataiter = iter(testloader)
+    dataiter = iter(testloader_show)
     images, labels = next(dataiter)
     images, labels = images.to(device), labels.to(device)
-    imshow(torchvision.utils.make_grid(images))
+    im_show(torchvision.utils.make_grid(images),img1_path)
     print('GroundTruth: ', ' '.join(
-        f'{classes[labels[j]]:5s}' for j in range(batch_size)))
+        f'{classes[labels[j]]:5s}' for j in range(batch_size_show)))
 
     # Load the trained model and predict on test data
     net = Net().to(device)
@@ -129,13 +130,13 @@ if __name__ == '__main__':
 
     # Display predicted labels
     print('Predicted: ', ' '.join(
-        f'{classes[predicted[j]]:5s}' for j in range(batch_size)))
+        f'{classes[predicted[j]]:5s}' for j in range(batch_size_show)))
 
     # Calculate the accuracy of the model on the test set
     correct = 0
     total = 0
     with torch.no_grad():
-        for data in testloader:
+        for data in testloader_show:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
@@ -143,8 +144,7 @@ if __name__ == '__main__':
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    print(
-        f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
+    print(f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
 
     # Calculate the accuracy of the model for each class
     correct_pred = {classname: 0 for classname in classes}
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
     # again no gradients needed
     with torch.no_grad():
-        for data in testloader:
+        for data in testloader_show:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
     conf_matrix = np.zeros((10, 10))
     with torch.no_grad():
-        for data in testloader:
+        for data in testloader_show:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
@@ -192,6 +192,7 @@ if __name__ == '__main__':
 
     ax.set_xlabel('Predicted')
     ax.set_ylabel('True')
+    plt.savefig(img2_path)
     plt.show(block=False)   # show the image without blocking the code
     plt.pause(2)            # pause the code execution for 1 second
     plt.close()             # close the image
