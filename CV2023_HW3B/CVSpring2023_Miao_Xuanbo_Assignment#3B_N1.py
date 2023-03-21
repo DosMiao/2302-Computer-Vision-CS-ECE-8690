@@ -35,9 +35,9 @@ if __name__ == '__main__':
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N1_cifar_net.pth'
-    img1_path  = folder_path+'N1_img1.png'
-    img2_path  = folder_path+'N1_img2.png'
-    img3_path  = folder_path+'N1_img3.png'
+    img1_path  = folder_path+'img/N1_img1.png'
+    img2_path  = folder_path+'img/N1_img2.png'
+    img3_path  = folder_path+'img/N1_img3.png'
 
     trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)

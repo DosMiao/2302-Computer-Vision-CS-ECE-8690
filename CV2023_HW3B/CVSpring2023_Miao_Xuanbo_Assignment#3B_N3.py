@@ -34,9 +34,9 @@ if __name__ == '__main__':
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N3_cifar_net.pth'
-    img1_path  = folder_path+'N3_img1.png'
-    img2_path  = folder_path+'N3_img2.png'
-    img3_path  = folder_path+'N3_img3.png'
+    img1_path  = folder_path+'img/N3_img1.png'
+    img2_path  = folder_path+'img/N3_img2.png'
+    img3_path  = folder_path+'img/N3_img3.png'
 
 
     # Load training set

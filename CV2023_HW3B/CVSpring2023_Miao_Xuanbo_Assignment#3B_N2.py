@@ -36,9 +36,9 @@ if __name__ == '__main__':
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N2_cifar_net.pth'
-    img1_path  = folder_path+'N2_img1.png'
-    img2_path  = folder_path+'N2_img2.png'
-    img3_path  = folder_path+'N2_img3.png'
+    img1_path  = folder_path+'img/N2_img1.png'
+    img2_path  = folder_path+'img/N2_img2.png'
+    img3_path  = folder_path+'img/N2_img3.png'
 
     trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -287,6 +287,6 @@ if __name__ == '__main__':
     # Display the confused images and their true labels
     print("Confused images:")
     for i, img in enumerate(confused_images):
-        image_name = folder_path+ f"N2_confused_image_{i+1}.png"
+        image_name = folder_path+ f"img/N2_confused_image_{i+1}.png"
         im_show(img.unsqueeze(0),image_name)
         print(f"True label: {classes[confused_labels[i]]}")
