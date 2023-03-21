@@ -19,8 +19,8 @@ if __name__ == '__main__':
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # Set batch size
-    batch_size = 40
-    epoch_num = 5
+    batch_size = 4
+    epoch_num = 4
     disp_interval = 4000/batch_size
     batch_size_show = 8
 
