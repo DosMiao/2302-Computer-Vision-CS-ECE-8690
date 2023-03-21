@@ -24,10 +24,10 @@ if __name__ == '__main__':
     disp_interval = 4000/batch_size
     batch_size_show = 8
 
-    folder_path = './CV2023_HW3B/cifar_net_N2'
-    model_path = folder_path+'.pth'
-    img1_path  = folder_path+'_img1.png'
-    img2_path  = folder_path+'_img2.png'
+    folder_path = './CV2023_HW3B/'
+    model_path = folder_path+'N2_cifar_net.pth'
+    img1_path  = folder_path+'N2_img1.png'
+    img2_path  = folder_path+'N2_img2.png'
 
 
     trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
@@ -77,7 +77,7 @@ if __name__ == '__main__':
             return x
 
 
-    if 1: #~os.path.exists(model_path):
+    if not os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
