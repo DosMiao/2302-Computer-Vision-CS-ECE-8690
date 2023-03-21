@@ -8,6 +8,7 @@ if __name__ == '__main__':
     from torch import optim, nn
     import matplotlib.pyplot as plt
     import numpy as np
+    import time
 
     # Check if CUDA is available, else use CPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     disp_interval = batch_size*50
     batch_size_show = 8
 
-    if batch_size<5:
+    if batch_size<10:
         device = torch.device('cpu')
         print(f"Change to use device: {device}"+" because batch size is too small")
 
@@ -58,7 +59,7 @@ if __name__ == '__main__':
 
     def plot_loss(loss_history, epoch, i):
         plt.plot(loss_history)
-        plt.xlabel('Batch')
+        plt.xlabel('Display Interval')
         plt.ylabel('Loss')
         plt.title(f'Loss History - Epoch: {epoch + 1}, Batch: {i + 1}')
         plt.pause(0.001)
@@ -104,9 +105,13 @@ if __name__ == '__main__':
         
         loss_history = []
         # Train the neural network
-        for epoch in range(epoch_num):  # loop over the dataset multiple times
+        start_time = time.time()  # Record the start time
 
+        for epoch in range(epoch_num):  # loop over the dataset multiple times
+            
+            epoch_start_time = time.time() 
             running_loss = 0.0
+            
             for i, data in enumerate(trainloader, 0):
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data
@@ -128,8 +133,16 @@ if __name__ == '__main__':
                     loss_history.append(running_loss / disp_interval)
                     plot_loss(loss_history, epoch, i)
                     running_loss = 0.0
+            
+            epoch_elapsed_time = time.time() - epoch_start_time  # Calculate the elapsed time for the epoch
+            print(f'Time taken for epoch {epoch + 1}: {epoch_elapsed_time:.2f} seconds')
 
         print('Finished Training')    
+
+        end_time = time.time()  # Record the end time
+        total_training_time = end_time - start_time  # Calculate the elapsed time
+        print(f'Total training time: {total_training_time:.2f} seconds')
+
         # Save the trained model
         torch.save(net.state_dict(), model_path)
 
