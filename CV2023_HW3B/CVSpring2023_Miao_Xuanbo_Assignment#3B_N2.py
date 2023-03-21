@@ -21,14 +21,18 @@ if __name__ == '__main__':
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # Set batch size
-    batch_size = 40
+    batch_size = 4
     epoch_num = 4
     disp_interval = batch_size*50
     batch_size_show = 8
 
-    if batch_size<5:
-        device = torch.device('cpu' and device=='cpu')
-        print(f"Change to use device: {device}"+" because batch size is too small")
+    if batch_size<10:
+        disp_interval*=2
+        
+        if device!='cpu':
+            device = torch.device('cpu')
+            print(f"Change to use device: {device}"+" because batch size is too small")
+
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N2_cifar_net.pth'
