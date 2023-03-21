@@ -5,5 +5,4 @@
 			"version": "latest"
 		}
 	}
-	"python.linting.pylintEnabled": false,
 }
