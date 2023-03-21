@@ -20,9 +20,10 @@ if __name__ == '__main__':
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    batch_size = 100
-    epoch_num = 20
+    batch_size = 40
+    epoch_num = 5
     disp_interval = 4000/batch_size
+    batch_size_show = 8
 
     folder_path = './CV2023_HW3B'
     model_path = folder_path+'/cifar_net_N4.pth'
@@ -32,6 +33,7 @@ if __name__ == '__main__':
 
     testset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=False, download=True, transform=transform_test)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+    testloader_show = torch.utils.data.DataLoader(testset, batch_size=batch_size_show, shuffle=False, num_workers=2)
 
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -41,7 +43,7 @@ if __name__ == '__main__':
         npimg = img.numpy()
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
         plt.show(block=False)
-        plt.pause(2)
+        plt.pause(5)
         plt.close()
 
     class Net(nn.Module):
@@ -100,23 +102,23 @@ if __name__ == '__main__':
         print('Finished Training')
         torch.save(net.state_dict(), model_path)
 
-    dataiter = iter(testloader)
+    dataiter = iter(testloader_show)
     images, labels = next(dataiter)
     images, labels = images.to(device), labels.to(device)
     imshow(torchvision.utils.make_grid(images))
-    print('GroundTruth: ', ' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
+    print('GroundTruth: ', ' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size_show)))
 
     net = Net().to(device)
     net.load_state_dict(torch.load(model_path))
     outputs = net(images)
     _, predicted = torch.max(outputs, 1)
 
-    print('Predicted: ', ' '.join(f'{classes[predicted[j]]:5s}' for j in range(batch_size)))
+    print('Predicted: ', ' '.join(f'{classes[predicted[j]]:5s}' for j in range(batch_size_show)))
 
     correct = 0
     total = 0
     with torch.no_grad():
-        for data in testloader:
+        for data in testloader_show:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
@@ -130,7 +132,7 @@ if __name__ == '__main__':
     total_pred = {classname: 0 for classname in classes}
 
     with torch.no_grad():
-        for data in testloader:
+        for data in testloader_show:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
@@ -146,7 +148,7 @@ if __name__ == '__main__':
 
     conf_matrix = np.zeros((10, 10))
     with torch.no_grad():
-        for data in testloader:
+        for data in testloader_show:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
