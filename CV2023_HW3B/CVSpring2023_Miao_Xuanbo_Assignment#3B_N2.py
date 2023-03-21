@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     # Set batch size
     batch_size = 40
-    epoch_num = 5
+    epoch_num = 4
     disp_interval = 4000/batch_size
     batch_size_show = 8
 
