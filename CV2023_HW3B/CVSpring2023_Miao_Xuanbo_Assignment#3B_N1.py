@@ -79,7 +79,9 @@ if __name__ == '__main__':
             x = F.relu(self.fc2(x))
             x = self.fc3(x)
             return x
-    if not os.path.exists(model_path):
+    
+    if 1: 
+    #if not os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
