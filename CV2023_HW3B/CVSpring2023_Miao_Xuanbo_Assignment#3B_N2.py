@@ -37,8 +37,8 @@ if __name__ == '__main__':
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N2_cifar_net.pth'
     img1_path  = folder_path+'N2_img1.png'
-    img2_path  = folder_path+'N1_img2.png'
-    img3_path  = folder_path+'N1_img3.png'
+    img2_path  = folder_path+'N2_img2.png'
+    img3_path  = folder_path+'N2_img3.png'
 
     trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -56,7 +56,12 @@ if __name__ == '__main__':
         img = img.cpu()
         img = img / 2 + 0.5     # unnormalize
         npimg = img.numpy()
-        plt.imshow(np.transpose(npimg, (1, 2, 0)))
+        
+        if npimg.shape[0]==1:
+            npimg=np.reshape(npimg,(npimg.shape[1],npimg.shape[2],npimg.shape[3]))
+        
+        plt.imshow(np.transpose(npimg,(1, 2, 0)))
+
         if save_path is not None:
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
             plt.savefig(save_path)
@@ -102,8 +107,8 @@ if __name__ == '__main__':
             x = self.fc2(x)
             return x
 
-    if 1: 
-    #if not os.path.exists(model_path):
+    #if 1: 
+    if not os.path.exists(model_path):
                 # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
@@ -240,3 +245,48 @@ if __name__ == '__main__':
     plt.pause(2)            # pause the code execution for 1 second
     plt.close()             # close the image
 
+    # Calculate worst accuracy class and the class it is most confused with
+    worst_accuracy = 100
+    worst_class = None
+    most_confused_class = None
+
+    for classname, correct_count in correct_pred.items():
+        accuracy = 100 * float(correct_count) / total_pred[classname]
+        if accuracy < worst_accuracy:
+            worst_accuracy = accuracy
+            worst_class = classname
+
+    worst_class_index = classes.index(worst_class)
+    conf_row = conf_matrix[worst_class_index, :]
+    most_confused_class_index = np.argmax(conf_row[np.arange(len(conf_row)) != worst_class_index])
+    most_confused_class = classes[most_confused_class_index]
+
+    print(f"The class with the worst accuracy is: {worst_class} with accuracy: {worst_accuracy:.1f}%")
+    print(f"The class it is most confused with is: {most_confused_class}")
+
+    # Collect 5 confused images and their true labels
+    confused_images = []
+    confused_labels = []
+
+    with torch.no_grad():
+        for data in testloader:
+            if len(confused_images) >= 5:
+                break
+            images, labels = data
+            images, labels = images.to(device), labels.to(device)
+            outputs = net(images)
+            _, predicted = torch.max(outputs, 1)
+            
+            for i in range(len(labels)):
+                if labels[i] == classes.index(worst_class) and predicted[i] == classes.index(most_confused_class):
+                    confused_images.append(images[i].cpu())
+                    confused_labels.append(labels[i].cpu())
+                    if len(confused_images) >= 5:
+                        break
+
+    # Display the confused images and their true labels
+    print("Confused images:")
+    for i, img in enumerate(confused_images):
+        image_name = folder_path+ f"N2_confused_image_{i+1}.png"
+        im_show(img.unsqueeze(0),image_name)
+        print(f"True label: {classes[confused_labels[i]]}")
