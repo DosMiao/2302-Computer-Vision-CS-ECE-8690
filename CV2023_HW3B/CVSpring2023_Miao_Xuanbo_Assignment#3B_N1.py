@@ -25,9 +25,13 @@ if __name__ == '__main__':
     disp_interval = batch_size*50
     batch_size_show = 8
 
-    if batch_size<10 and device=='cpu':
-        device = torch.device('cpu')
-        print(f"Change to use device: {device}"+" because batch size is too small")
+    # make a if batch_size<10 and device is not 'cpu'
+    if batch_size<10:
+        disp_interval*=2
+        
+        if device!='cpu':
+            device = torch.device('cpu')
+            print(f"Change to use device: {device}"+" because batch size is too small")
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N1_cifar_net.pth'
