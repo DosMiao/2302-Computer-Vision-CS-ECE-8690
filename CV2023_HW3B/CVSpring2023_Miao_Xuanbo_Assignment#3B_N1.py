@@ -1,4 +1,4 @@
-#pylint disable all
+# pylint disable all
 if __name__ == '__main__':
     import os
     import torch
@@ -26,28 +26,35 @@ if __name__ == '__main__':
     batch_size_show = 8
 
     # make a if batch_size<10 and device is not 'cpu'
-    if batch_size<10:
-        disp_interval*=2
+    if batch_size < 10:
+        disp_interval *= 2
 
-        if device!='cpu':
+        if device != 'cpu':
             device = torch.device('cpu')
-            print(f"Change to use device: {device}"+" because batch size is too small")
+            print(f"Change to use device: {device}" +
+                  " because batch size is too small")
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N1_cifar_net.pth'
-    img1_path  = folder_path+'img/N1_img1.png'
-    img2_path  = folder_path+'img/N1_img2.png'
-    img3_path  = folder_path+'img/N1_img3.png'
+    img1_path = folder_path+'img/N1_img1.png'
+    img2_path = folder_path+'img/N1_img2.png'
+    img3_path = folder_path+'img/N1_img3.png'
 
-    trainset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+    trainset = torchvision.datasets.CIFAR10(
+        root=folder_path+'/CIFAR10_data', train=True, download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(
+        trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-    testset = torchvision.datasets.CIFAR10(root=folder_path+'/CIFAR10_data', train=False, download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
-    testloader_show = torch.utils.data.DataLoader(testset, batch_size=batch_size_show, shuffle=False, num_workers=2)
+    testset = torchvision.datasets.CIFAR10(
+        root=folder_path+'/CIFAR10_data', train=False, download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(
+        testset, batch_size=batch_size, shuffle=False, num_workers=2)
+    testloader_show = torch.utils.data.DataLoader(
+        testset, batch_size=batch_size_show, shuffle=False, num_workers=2)
 
     # Define classes
-    classes = ('plane', 'car', 'bird', 'cat', 'deer','dog', 'frog', 'horse', 'ship', 'truck')
+    classes = ('plane', 'car', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck')
 
     # Function to display images
     def im_show(img, save_path=None):
@@ -83,8 +90,8 @@ if __name__ == '__main__':
     dataiter = iter(testloader_show)
     images, labels = next(dataiter)
 
-    ## Display images and labels
-    #im_show(torchvision.utils.make_grid(images))
+    # Display images and labels
+    # im_show(torchvision.utils.make_grid(images))
     #print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size_show)))
 
     # Define the neural network
@@ -106,9 +113,9 @@ if __name__ == '__main__':
             x = F.relu(self.fc2(x))
             x = self.fc3(x)
             return x
-    
-    if 1: 
-    #if not os.path.exists(model_path):
+
+    if 1:
+        # if not os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
@@ -116,16 +123,16 @@ if __name__ == '__main__':
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
         #optimizer = optim.Adam(net.parameters(), lr=0.001)
-        
+
         loss_history = []
         # Train the neural network
         start_time = time.time()  # Record the start time
 
         for epoch in range(epoch_num):  # loop over the dataset multiple times
-            
-            epoch_start_time = time.time() 
+
+            epoch_start_time = time.time()
             running_loss = 0.0
-            
+
             for i, data in enumerate(trainloader, 0):
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data
@@ -143,15 +150,18 @@ if __name__ == '__main__':
                 # print statistics
                 running_loss += loss.item()
                 if i % disp_interval == disp_interval-1:    # print every disp_interval mini-batches
-                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / disp_interval:.3f}')
+                    print(
+                        f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / disp_interval:.3f}')
                     loss_history.append(running_loss / disp_interval)
                     plot_loss(loss_history, epoch, i)
                     running_loss = 0.0
-            
-            epoch_elapsed_time = time.time() - epoch_start_time  # Calculate the elapsed time for the epoch
-            print(f'Time taken for epoch {epoch + 1}: {epoch_elapsed_time:.2f} seconds')
 
-        print('Finished Training')    
+            # Calculate the elapsed time for the epoch
+            epoch_elapsed_time = time.time() - epoch_start_time
+            print(
+                f'Time taken for epoch {epoch + 1}: {epoch_elapsed_time:.2f} seconds')
+
+        print('Finished Training')
 
         end_time = time.time()  # Record the end time
         total_training_time = end_time - start_time  # Calculate the elapsed time
@@ -166,7 +176,7 @@ if __name__ == '__main__':
     dataiter = iter(testloader_show)
     images, labels = next(dataiter)
     images, labels = images.to(device), labels.to(device)
-    im_show(torchvision.utils.make_grid(images),img1_path)
+    im_show(torchvision.utils.make_grid(images), img1_path)
     print('GroundTruth: ', ' '.join(
         f'{classes[labels[j]]:5s}' for j in range(batch_size_show)))
 

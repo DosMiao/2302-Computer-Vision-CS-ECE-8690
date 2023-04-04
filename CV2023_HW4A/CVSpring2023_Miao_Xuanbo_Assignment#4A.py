@@ -5,25 +5,30 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def load_model():
     model = torchvision.models.segmentation.deeplabv3_resnet50(pretrained=True)
     model.eval()
     return model
+
 
 def preprocess_image(image_path):
     input_image = Image.open(image_path)
     preprocess = transforms.Compose([
         transforms.Resize((513, 513)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+                             0.229, 0.224, 0.225]),
     ])
     input_tensor = preprocess(input_image)
     return input_image, input_tensor.unsqueeze(0)
+
 
 def segment_image(model, input_tensor):
     with torch.no_grad():
         output = model(input_tensor)['out'][0]
     return output
+
 
 def decode_segmap(image, output):
     _, preds = torch.max(output, 0)
@@ -70,11 +75,13 @@ def plot_results(input_image, segmentation_mask, preds):
     # Create a legend using class colors and names
     import matplotlib.patches as mpatches
     legend_elements = [
-        mpatches.Patch(color=(label_colors[i] / 255.), label=pascal_voc_classes[i])
+        mpatches.Patch(
+            color=(label_colors[i] / 255.), label=pascal_voc_classes[i])
         for i in range(len(pascal_voc_classes))
         if i in np.unique(preds)
     ]
-    axes[1].legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1, 1), title="Classes")
+    axes[1].legend(handles=legend_elements, loc='upper left',
+                   bbox_to_anchor=(1, 1), title="Classes")
 
     # plt.show() with 2 seconds pause
     plt.show(block=False)   # show the image without blocking the code
@@ -85,7 +92,8 @@ def plot_results(input_image, segmentation_mask, preds):
 
 
 def main():
-    test_images = ['./CV2023_HW4A/test_img/HW4a_Test1.jpg', './CV2023_HW4A/test_img/HW4a_Test2.jpg', './CV2023_HW4A/test_img/HW4a_Test3.jpg']
+    test_images = ['./CV2023_HW4A/test_img/HW4a_Test1.jpg',
+                   './CV2023_HW4A/test_img/HW4a_Test2.jpg', './CV2023_HW4A/test_img/HW4a_Test3.jpg']
     model = load_model()
 
     for image_path in test_images:
@@ -97,6 +105,6 @@ def main():
         fig.savefig(image_path[:-4] + '_segmentation.png')
         plt.close(fig)
 
+
 if __name__ == "__main__":
     main()
-
