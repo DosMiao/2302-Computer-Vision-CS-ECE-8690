@@ -18,8 +18,7 @@ def preprocess_image(image_path):
         transforms.Resize((513, 513)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
-                             0.229, 0.224, 0.225]),
-    ])
+                             0.229, 0.224, 0.225]),])
     input_tensor = preprocess(input_image)
     return input_image, input_tensor.unsqueeze(0)
 
@@ -51,11 +50,9 @@ def decode_segmap(image, output):
 
 
 def plot_results(input_image, segmentation_mask, preds):
-    pascal_voc_classes = [
-        'background', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
-        'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person',
-        'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'
-    ]
+    pascal_voc_classes = ['background', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
+                          'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person',
+                          'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
     pascal_voc_colormap = [
         [0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
@@ -93,7 +90,8 @@ def plot_results(input_image, segmentation_mask, preds):
 
 def main():
     test_images = ['./CV2023_HW4A/test_img/HW4a_Test1.jpg',
-                   './CV2023_HW4A/test_img/HW4a_Test2.jpg', './CV2023_HW4A/test_img/HW4a_Test3.jpg']
+                   './CV2023_HW4A/test_img/HW4a_Test2.jpg',
+                   './CV2023_HW4A/test_img/HW4a_Test3.jpg']
     model = load_model()
 
     for image_path in test_images:
