@@ -1,108 +1,66 @@
-import torch
-import torchvision
-from torchvision import transforms
-from PIL import Image
-import matplotlib.pyplot as plt
+import os
+import cv2
 import numpy as np
 
 
-def load_model():
-    model = torchvision.models.segmentation.deeplabv3_resnet50(pretrained=True)
-    model.eval()
-    return model
+class BGSubModel:
+    """Background subtraction model.
+    """
+
+    def __init__(self, first_frame, alpha, tm):
+        self.mean = np.float32(first_frame)
+        self.var = np.ones_like(self.mean) * 100
+        self.alpha = alpha
+        self.tm = tm
+
+    def classify(self, current_frame):
+        diff = np.abs(np.float32(current_frame) - self.mean)
+        fg_mask = np.where(
+            diff > (self.tm * np.sqrt(self.var)), 255, 0).astype(np.uint8)
+        return fg_mask
+
+    def update(self, current_frame):
+        alpha_mask = np.where(np.abs(np.float32(current_frame) - self.mean)
+                              <= (self.tm * np.sqrt(self.var)), self.alpha, 0).astype(np.float32)
+        self.mean = (1 - alpha_mask) * self.mean + \
+            alpha_mask * np.float32(current_frame)
+        self.var = (1 - alpha_mask) * self.var + alpha_mask * \
+            (np.float32(current_frame) - self.mean) ** 2
 
 
-def preprocess_image(image_path):
-    input_image = Image.open(image_path)
-    preprocess = transforms.Compose([
-        transforms.Resize((513, 513)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
-                             0.229, 0.224, 0.225]),])
-    input_tensor = preprocess(input_image)
-    return input_image, input_tensor.unsqueeze(0)
-
-
-def segment_image(model, input_tensor):
-    with torch.no_grad():
-        output = model(input_tensor)['out'][0]
-    return output
-
-
-def decode_segmap(image, output):
-    _, preds = torch.max(output, 0)
-
-    pascal_voc_colormap = [
-        [0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
-        [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
-        [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],
-        [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
-        [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0]
-    ]
-    label_colors = np.array(pascal_voc_colormap, dtype=np.uint8)
-
-    rgb = np.zeros((513, 513, 3), dtype=np.uint8)
-    for label in range(0, len(label_colors)):
-        idx = preds == label
-        rgb[idx] = label_colors[label]
-
-    return Image.fromarray(rgb), preds
-
-
-def plot_results(input_image, segmentation_mask, preds):
-    pascal_voc_classes = ['background', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
-                          'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person',
-                          'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
-
-    pascal_voc_colormap = [
-        [0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
-        [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
-        [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],
-        [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
-        [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0]
-    ]
-    label_colors = np.array(pascal_voc_colormap, dtype=np.uint8)
-
-    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
-    axes[0].imshow(input_image)
-    axes[0].set_title('Original Image')
-    axes[1].imshow(segmentation_mask)
-    axes[1].set_title('Segmentation Mask')
-
-    # Create a legend using class colors and names
-    import matplotlib.patches as mpatches
-    legend_elements = [
-        mpatches.Patch(
-            color=(label_colors[i] / 255.), label=pascal_voc_classes[i])
-        for i in range(len(pascal_voc_classes))
-        if i in np.unique(preds)
-    ]
-    axes[1].legend(handles=legend_elements, loc='upper left',
-                   bbox_to_anchor=(1, 1), title="Classes")
-
-    # plt.show() with 2 seconds pause
-    plt.show(block=False)   # show the image without blocking the code
-    plt.pause(2)            # pause the code execution for 2 seconds
-
-    # return the figure
-    return fig
+# Parameters
+ALPHA = 0.01
+TM = 3
+INPUT_PATH = './input'
+OUTPUT_PATH = './output'
 
 
 def main():
-    test_images = ['./CV2023_HW4A/test_img/HW4a_Test1.jpg',
-                   './CV2023_HW4A/test_img/HW4a_Test2.jpg',
-                   './CV2023_HW4A/test_img/HW4a_Test3.jpg']
-    model = load_model()
+    if not os.path.isdir(OUTPUT_PATH):
+        os.mkdir(OUTPUT_PATH)
+    flist = [f for f in os.listdir(INPUT_PATH) if f.endswith('.jpg')]
+    flist = sorted(flist)
+    n = len(flist)
 
-    for image_path in test_images:
-        input_image, input_tensor = preprocess_image(image_path)
-        output = segment_image(model, input_tensor)
-        segmentation_mask, preds = decode_segmap(input_image, output)
-        fig = plot_results(input_image, segmentation_mask, preds)
-        # save the fig with associated image name
-        fig.savefig(image_path[:-4] + '_segmentation.png')
-        plt.close(fig)
+    # Read the first image and initialize the model
+    im = cv2.imread(os.path.join(INPUT_PATH, flist[0]))
+    bg_model = BGSubModel(im, ALPHA, TM)
+
+    # Main loop
+    for fr in range(n):
+        im = cv2.imread(os.path.join(INPUT_PATH, flist[fr]))
+        fg_mask = bg_model.classify(im)
+        bg_model.update(im)
+
+        # Save the results
+        fname = 'FGmask_' + flist[fr]
+        fname_wpath = os.path.join(OUTPUT_PATH, fname)
+        cv2.imwrite(fname_wpath, fg_mask)
+
+        fname = 'BGmean_' + flist[fr]
+        fname_wpath = os.path.join(OUTPUT_PATH, fname)
+        cv2.imwrite(fname_wpath, bg_model.mean.astype('uint8'))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
