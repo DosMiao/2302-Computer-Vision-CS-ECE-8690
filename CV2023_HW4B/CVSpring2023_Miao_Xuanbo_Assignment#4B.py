@@ -38,7 +38,7 @@ OUTPUT_PATH = './CV2023_HW4B/output'
 def main():
     if not os.path.isdir(OUTPUT_PATH):
         os.mkdir(OUTPUT_PATH)
-    flist = [f for f in os.listdir(INPUT_PATH) if f.endswith('.jpg')]
+    flist = [f for f in os.listdir(INPUT_PATH) if f.endswith('.png')]
     flist = sorted(flist)
     n = len(flist)
 
@@ -46,21 +46,36 @@ def main():
     im = cv2.imread(os.path.join(INPUT_PATH, flist[0]))
     bg_model = BGSubModel(im, ALPHA, TM)
 
+    # Set up the VideoWriter objects
+    video_file = os.path.join(OUTPUT_PATH, 'output_video.avi')
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    video_writer = cv2.VideoWriter(video_file, fourcc, 10, (im.shape[1], im.shape[0]))
+
+    fgmask_video_file = os.path.join(OUTPUT_PATH, 'output_fgmask_video.avi')
+    fgmask_video_writer = cv2.VideoWriter(fgmask_video_file, fourcc, 10, (im.shape[1], im.shape[0]), isColor=False)
+
     # Main loop
     for fr in range(n):
         im = cv2.imread(os.path.join(INPUT_PATH, flist[fr]))
         fg_mask = bg_model.classify(im)
         bg_model.update(im)
 
-        # Save the results
-        fname = 'FGmask_' + flist[fr]
-        fname_wpath = os.path.join(OUTPUT_PATH, fname)
-        cv2.imwrite(fname_wpath, fg_mask)
+        # Save the results for specific frames
+        if fr in [5, 100, 400]:
+            fname = f'FGmask_{flist[fr]}'
+            fname_wpath = os.path.join(OUTPUT_PATH, fname)
+            cv2.imwrite(fname_wpath, fg_mask)
 
-        fname = 'BGmean_' + flist[fr]
-        fname_wpath = os.path.join(OUTPUT_PATH, fname)
-        cv2.imwrite(fname_wpath, bg_model.mean.astype('uint8'))
+            fname = f'BGmean_{flist[fr]}'
+            fname_wpath = os.path.join(OUTPUT_PATH, fname)
+            cv2.imwrite(fname_wpath, bg_model.mean.astype('uint8'))
 
+        # Write the current frame and FGmask to the videos
+        video_writer.write(im)
+        fgmask_video_writer.write(fg_mask)
+
+    video_writer.release()
+    fgmask_video_writer.release()
 
 if __name__ == '__main__':
     main()
