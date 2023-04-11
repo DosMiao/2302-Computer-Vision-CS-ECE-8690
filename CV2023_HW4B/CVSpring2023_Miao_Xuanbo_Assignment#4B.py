@@ -22,15 +22,19 @@ class BGSubModel:
     def update(self, current_frame):
         alpha_mask = np.where(np.abs(np.float32(current_frame) - self.mean)
                               <= (self.tm * np.sqrt(self.var)), self.alpha, 0).astype(np.float32)
-        self.mean = (1 - alpha_mask) * self.mean + \
+
+        inv_alpha_mask = 1 - alpha_mask
+        self.mean = inv_alpha_mask * self.mean + \
             alpha_mask * np.float32(current_frame)
-        self.var = (1 - alpha_mask) * self.var + alpha_mask * \
-            (np.float32(current_frame) - self.mean) ** 2
+        self.var = inv_alpha_mask * self.var + \
+            alpha_mask * (np.float32(current_frame) - self.mean) ** 2
 
 
 # Parameters
-ALPHA = 0.001
+ALPHA = 0.01
 TM = 2
+
+# Files & Folders
 INPUT_PATH = './CV2023_HW4B/input'
 OUTPUT_PATH = './CV2023_HW4B/output'
 
@@ -59,9 +63,21 @@ def main():
 
     # Main loop
     for fr in range(n):
+        # Read the image
         im = cv2.imread(os.path.join(INPUT_PATH, flist[fr]))
+
+        # Classify the foreground using the model & Update the model with the new image
         fg_mask = bg_model.classify(im)
         bg_model.update(im)
+
+        # Display the input frame, background model, and foreground mask
+        cv2.imshow('Input Frame', im)
+        cv2.imshow('Background Model', bg_model.mean.astype('uint8'))
+        cv2.imshow('Foreground Mask', fg_mask)
+
+        # Press 'q' to exit the loop
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
         # Save the results for specific frames
         if fr in [5, 100, 400]:
@@ -79,6 +95,7 @@ def main():
 
     video_writer.release()
     fgmask_video_writer.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
