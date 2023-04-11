@@ -29,8 +29,8 @@ class BGSubModel:
 
 
 # Parameters
-ALPHA = 0.01
-TM = 3
+ALPHA = 0.001
+TM = 2
 INPUT_PATH = './CV2023_HW4B/input'
 OUTPUT_PATH = './CV2023_HW4B/output'
 
@@ -47,12 +47,15 @@ def main():
     bg_model = BGSubModel(im, ALPHA, TM)
 
     # Set up the VideoWriter objects
-    video_file = os.path.join(OUTPUT_PATH, 'output_video.avi')
+    # the name should contain the parameters of the model, ALPHA and TM
+    video_file = os.path.join(OUTPUT_PATH, f'op_{ALPHA}_{TM}.avi')
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    video_writer = cv2.VideoWriter(video_file, fourcc, 10, (im.shape[1], im.shape[0]))
+    video_writer = cv2.VideoWriter(
+        video_file, fourcc, 10, (im.shape[1], im.shape[0]))
 
-    fgmask_video_file = os.path.join(OUTPUT_PATH, 'output_fgmask_video.avi')
-    fgmask_video_writer = cv2.VideoWriter(fgmask_video_file, fourcc, 10, (im.shape[1], im.shape[0]), isColor=False)
+    fgmask_video_file = os.path.join(OUTPUT_PATH, f'op_fg_{ALPHA}_{TM}.avi')
+    fgmask_video_writer = cv2.VideoWriter(
+        fgmask_video_file, fourcc, 10, (im.shape[1], im.shape[0]))
 
     # Main loop
     for fr in range(n):
@@ -62,11 +65,11 @@ def main():
 
         # Save the results for specific frames
         if fr in [5, 100, 400]:
-            fname = f'FGmask_{flist[fr]}'
+            fname = f'FGmask_{ALPHA}_{TM}_{flist[fr]}'
             fname_wpath = os.path.join(OUTPUT_PATH, fname)
             cv2.imwrite(fname_wpath, fg_mask)
 
-            fname = f'BGmean_{flist[fr]}'
+            fname = f'BGmean_{ALPHA}_{TM}_{flist[fr]}'
             fname_wpath = os.path.join(OUTPUT_PATH, fname)
             cv2.imwrite(fname_wpath, bg_model.mean.astype('uint8'))
 
@@ -76,6 +79,7 @@ def main():
 
     video_writer.release()
     fgmask_video_writer.release()
+
 
 if __name__ == '__main__':
     main()
