@@ -31,8 +31,8 @@ class BGSubModel:
 # Parameters
 ALPHA = 0.01
 TM = 3
-INPUT_PATH = './input'
-OUTPUT_PATH = './output'
+INPUT_PATH = './CV2023_HW4B/input'
+OUTPUT_PATH = './CV2023_HW4B/output'
 
 
 def main():
