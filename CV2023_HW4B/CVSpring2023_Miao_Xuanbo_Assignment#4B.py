@@ -2,6 +2,7 @@
 import os
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 # %% Background Subtraction Model
 
@@ -9,38 +10,75 @@ import numpy as np
 class BGSubModel:
 
     # The model is initialized with the first frame.
-    def __init__(self, first_frame, alpha, tm):
+    def __init__(self, first_frame, alpha, tm, true_bg):
         self.mean = np.float32(first_frame)
-        self.var = np.ones_like(self.mean) * 100
+        self.var = np.ones_like(self.mean) * 128
         self.alpha = alpha
         self.tm = tm
+        self.true_bg = np.float32(true_bg)
 
     # Classify the current frame as foreground or background
     def classify(self, current_frame):
         diff = np.abs(np.float32(current_frame) - self.mean)
-        fg_mask = np.where(
+        self.fg_mask = np.where(
             diff > (self.tm * np.sqrt(self.var)), 255, 0).astype(np.uint8)
-        return fg_mask
+
+        diff_true = np.abs(np.float32(current_frame) - self.true_bg)
+        self.true_fg_mask = np.where(
+            diff_true > (self.tm * np.sqrt(self.var)), 255, 0).astype(np.uint8)
+
+        return self.fg_mask
+
+    def evaluate(self):
+        mse_bg = np.mean((self.true_bg - self.mean) ** 2)
+        max_val_bg = np.max((self.true_bg.max(), self.mean.max()))
+        score_bg = 1 - np.sqrt((mse_bg / (max_val_bg ** 2)))
+
+        mse_fg = np.mean((self.true_fg_mask - self.fg_mask) ** 2)
+        max_val_fg = np.max((self.true_fg_mask.max(), self.fg_mask.max()))
+        # considering fg is only a very small part of the image, so we add a scale factor to make the score more reasonable
+        factor = 100
+        score_fg = 1 - np.sqrt((mse_fg / (max_val_fg ** 2)))*factor
+
+        return score_bg, score_fg
 
     # Update the model with the current frame
     def update(self, current_frame):
-        alpha_mask = np.where(np.abs(np.float32(current_frame) - self.mean)
-                              <= (self.tm * np.sqrt(self.var)), self.alpha, 0).astype(np.float32)
-        inv_alpha_mask = 1 - alpha_mask
-        self.mean = inv_alpha_mask * self.mean + \
-            alpha_mask * np.float32(current_frame)
-        self.var = inv_alpha_mask * self.var + \
-            alpha_mask * (np.float32(current_frame) - self.mean) ** 2
+        inv_alpha = 1 - self.alpha
+        self.mean = inv_alpha * self.mean + \
+            self.alpha * np.float32(current_frame)
+        self.var = inv_alpha * self.var + \
+            self.alpha * (np.float32(current_frame) - self.mean) ** 2
+
+
+def combine_images(output_path, alpha, tm, frame_numbers, file_prefixes):
+    combined_images = []
+
+    for fr in frame_numbers:
+        row_images = []
+        for prefix in file_prefixes:
+            fname = f'{prefix}_{alpha}_{tm}_{fr}.png'
+            fname_wpath = output_path+'/'+fname
+            img = cv2.imread(fname_wpath)
+            row_images.append(img)
+            os.remove(fname_wpath)
+
+        combined_row = np.hstack(row_images)
+        combined_images.append(combined_row)
+
+    final_image = np.vstack(combined_images)
+    return final_image
 
 
 # %% Main
 # Parameters
-ALPHA_list = [0.001]
-TM_list = [2]
+ALPHA_list = [0.01, 0.003, 0.001, 0.0003, 0.0001]
+TM_list = [2, 3, 4, 5, 6]
 
 # Files & Folders
-INPUT_PATH = 'c:/Users/tjumx/OneDrive - University of Missouri/data/Course/2302-Computer-Vision-CS-ECE-8690/CV2023_HW4B/input'
-OUTPUT_PATH = 'c:/Users/tjumx/OneDrive - University of Missouri/data/Course/2302-Computer-Vision-CS-ECE-8690/CV2023_HW4B/output'
+INPUT_PATH = './CV2023_HW4B/input'
+OUTPUT_PATH = './CV2023_HW4B/output'
+BG_true_PATH = './CV2023_HW4B/input/GT_CAVIAR1.png'
 
 
 def main():
@@ -50,32 +88,27 @@ def main():
     flist = sorted(flist)
     n = len(flist)
 
+    true_bg = cv2.imread(BG_true_PATH)
+
     for ALPHA in ALPHA_list:
         for TM in TM_list:
             # print the parameters
-            print(f'ALPHA = {ALPHA}, TM = {TM}\n')
+            print(f'ALPHA = {ALPHA}, TM = {TM}')
             # Read the first image and initialize the model
             im = cv2.imread(os.path.join(INPUT_PATH, flist[0]))
-            bg_model = BGSubModel(im, ALPHA, TM)
+            bg_model = BGSubModel(im, ALPHA, TM, true_bg)
 
             # Set up the VideoWriter objects
             # the name should contain the parameters of the model, ALPHA and TM
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
-            video_file = os.path.join(OUTPUT_PATH, f'op_{ALPHA}_{TM}.avi')
-            video_writer = cv2.VideoWriter(
-                video_file, fourcc, 10, (im.shape[1], im.shape[0]))
+            combined_video_file = os.path.join(
+                OUTPUT_PATH, f'combined_{ALPHA}_{TM}.avi')
+            combined_video_writer = cv2.VideoWriter(
+                combined_video_file, fourcc, 10, (im.shape[1]*3, im.shape[0]))
 
-            bgmean_video_file = os.path.join(
-                OUTPUT_PATH, f'op_bg_{ALPHA}_{TM}.avi')
-            bgmean_video_writer = cv2.VideoWriter(
-                bgmean_video_file, fourcc, 10, (im.shape[1], im.shape[0]))
-
-            fgmask_video_file = os.path.join(
-                OUTPUT_PATH, f'op_fg_{ALPHA}_{TM}.avi')
-            fgmask_video_writer = cv2.VideoWriter(
-                fgmask_video_file, fourcc, 10, (im.shape[1], im.shape[0]))
-
+            bg_scores = []
+            fg_scores = []
             # Main loop
             for fr in range(n):
                 # Read the image
@@ -99,7 +132,7 @@ def main():
                 cv2.putText(bg_draw, f'ALPHA = {ALPHA}, TM = {TM}', (im.shape[1]//15, 40),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
-                fg_draw = fg_mask.copy()
+                fg_draw = cv2.cvtColor(fg_mask, cv2.COLOR_BGR2GRAY)
                 cv2.putText(fg_draw, f'Frame {fr+1}/{n}', (im.shape[1]//15, 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 cv2.putText(fg_draw, f'ALPHA = {ALPHA}, TM = {TM}', (im.shape[1]//15, 40),
@@ -115,31 +148,55 @@ def main():
 
                 # Save the results for specific frames
                 if fr in [5, 100, 400]:
-                    fname = f'FGmask_{ALPHA}_{TM}_{flist[fr]}'
+                    fname = f'FGmask_{ALPHA}_{TM}_{fr}.png'
                     fname_wpath = os.path.join(OUTPUT_PATH, fname)
                     cv2.imwrite(fname_wpath, fg_draw)
 
-                    fname = f'BGmean_{ALPHA}_{TM}_{flist[fr]}'
+                    fname = f'BGmean_{ALPHA}_{TM}_{fr}.png'
                     fname_wpath = os.path.join(OUTPUT_PATH, fname)
                     cv2.imwrite(fname_wpath, bg_draw)
 
                 # Write the current frame and FGmask to the videos
-                video_writer.write(im_draw)
-                bgmean_video_writer.write(bg_draw)
-                fgmask_video_writer.write(fg_draw)
+                combined_frame = np.hstack(
+                    (im_draw, bg_draw, cv2.cvtColor(fg_draw, cv2.COLOR_GRAY2BGR)))
+                combined_video_writer.write(combined_frame)
 
                 # Print the progress using the same line
-                print(f'Frame {fr+1}/{n}', end='\r')
+                score_bg, score_fg = bg_model.evaluate()
+                bg_scores.append(np.mean(score_bg))
+                fg_scores.append(np.mean(score_fg))
 
-            video_writer.release()
-            fgmask_video_writer.release()
+                print(
+                    f'Frame: {fr}/{n}, bg%: {np.mean(score_bg):.5f}, fg%: {np.mean(score_fg):.5f}', end='\r')
+
+            # conbine these eix images into one image
+            frame_numbers = [5, 100, 400]
+            file_prefixes = ['FGmask', 'BGmean']
+            combined_image = combine_images(
+                OUTPUT_PATH, ALPHA, TM, frame_numbers, file_prefixes)
+
+            fname = f'Combined_{ALPHA}_{TM}.jpg'
+            fname_wpath = os.path.join(OUTPUT_PATH, fname)
+            cv2.imwrite(fname_wpath, combined_image)
+
             cv2.destroyAllWindows()
+            combined_video_writer.release()
+            cv2.destroyAllWindows()
+
             # print the status
-            print('Done                    \n')
+            print(
+                f'Done, bg%: {np.mean(score_bg):.5f}, fg%: {np.mean(score_fg):.5f}   \n')
+
+            plt.plot(range(0, fr + 1), bg_scores, label='Background Score')
+            plt.plot(range(0, fr + 1), fg_scores, label='Foreground Score')
+            plt.xlabel('Frame Number')
+            plt.ylabel('Score')
+            plt.legend()
+            plt.savefig(os.path.join(
+                OUTPUT_PATH, f'op_curve_{ALPHA}_{TM}.png'))
+            # then end this plt
+            plt.close()
 
 
 if __name__ == '__main__':
     main()
-
-
-# %%
