@@ -52,7 +52,7 @@ class BGSubModel:
 
 
 def combine_images(output_path, alpha, tm, frame_numbers, file_prefixes):
-    combined_images = []
+    images = []
 
     for fr in frame_numbers:
         row_images = []
@@ -63,17 +63,17 @@ def combine_images(output_path, alpha, tm, frame_numbers, file_prefixes):
             row_images.append(img)
             os.remove(fname_wpath)
 
-        combined_row = np.hstack(row_images)
-        combined_images.append(combined_row)
+        row = np.hstack(row_images)
+        images.append(row)
 
-    final_image = np.vstack(combined_images)
+    final_image = np.vstack(images)
     return final_image
 
 
 # %% Main
 # Parameters
 ALPHA_list = [0.01, 0.003, 0.001, 0.0003, 0.0001]
-TM_list = [2, 3, 4, 5, 6]
+TM_list = [2, 3, 4]
 
 # Files & Folders
 INPUT_PATH = './CV2023_HW4B/input'
@@ -102,10 +102,10 @@ def main():
             # the name should contain the parameters of the model, ALPHA and TM
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
-            combined_video_file = os.path.join(
-                OUTPUT_PATH, f'combined_{ALPHA}_{TM}.avi')
-            combined_video_writer = cv2.VideoWriter(
-                combined_video_file, fourcc, 10, (im.shape[1]*3, im.shape[0]))
+            video_file = os.path.join(
+                OUTPUT_PATH, f'{ALPHA}_{TM}.avi')
+            video_writer = cv2.VideoWriter(
+                video_file, fourcc, 10, (im.shape[1]*3, im.shape[0]))
 
             bg_scores = []
             fg_scores = []
@@ -119,7 +119,6 @@ def main():
                 bg_model.update(im)
 
                 # Display the input frame, background model, and foreground mask
-                # add frame number, ALPHA, and TM to the top left of the image
                 im_draw = im.copy()
                 cv2.putText(im_draw, f'Frame {fr+1}/{n}', (im.shape[1]//15, 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
@@ -157,9 +156,9 @@ def main():
                     cv2.imwrite(fname_wpath, bg_draw)
 
                 # Write the current frame and FGmask to the videos
-                combined_frame = np.hstack(
+                frame = np.hstack(
                     (im_draw, bg_draw, cv2.cvtColor(fg_draw, cv2.COLOR_GRAY2BGR)))
-                combined_video_writer.write(combined_frame)
+                video_writer.write(frame)
 
                 # Print the progress using the same line
                 score_bg, score_fg = bg_model.evaluate()
@@ -172,15 +171,15 @@ def main():
             # conbine these eix images into one image
             frame_numbers = [5, 100, 400]
             file_prefixes = ['FGmask', 'BGmean']
-            combined_image = combine_images(
+            image = combine_images(
                 OUTPUT_PATH, ALPHA, TM, frame_numbers, file_prefixes)
 
-            fname = f'Combined_{ALPHA}_{TM}.jpg'
+            fname = f'{ALPHA}_{TM}.jpg'
             fname_wpath = os.path.join(OUTPUT_PATH, fname)
-            cv2.imwrite(fname_wpath, combined_image)
+            cv2.imwrite(fname_wpath, image)
 
             cv2.destroyAllWindows()
-            combined_video_writer.release()
+            video_writer.release()
             cv2.destroyAllWindows()
 
             # print the status
