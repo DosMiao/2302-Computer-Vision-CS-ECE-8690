@@ -35,8 +35,8 @@ class BGSubModel:
 
 # %% Main
 # Parameters
-ALPHA = 0.01
-TM = 3
+ALPHA_list = [0.001]
+TM_list = [2]
 
 # Files & Folders
 INPUT_PATH = 'c:/Users/tjumx/OneDrive - University of Missouri/data/Course/2302-Computer-Vision-CS-ECE-8690/CV2023_HW4B/input'
@@ -50,59 +50,96 @@ def main():
     flist = sorted(flist)
     n = len(flist)
 
-    # Read the first image and initialize the model
-    im = cv2.imread(os.path.join(INPUT_PATH, flist[0]))
-    bg_model = BGSubModel(im, ALPHA, TM)
+    for ALPHA in ALPHA_list:
+        for TM in TM_list:
+            # print the parameters
+            print(f'ALPHA = {ALPHA}, TM = {TM}\n')
+            # Read the first image and initialize the model
+            im = cv2.imread(os.path.join(INPUT_PATH, flist[0]))
+            bg_model = BGSubModel(im, ALPHA, TM)
 
-    # Set up the VideoWriter objects
-    # the name should contain the parameters of the model, ALPHA and TM
-    video_file = os.path.join(OUTPUT_PATH, f'op_{ALPHA}_{TM}.avi')
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    video_writer = cv2.VideoWriter(
-        video_file, fourcc, 10, (im.shape[1], im.shape[0]))
+            # Set up the VideoWriter objects
+            # the name should contain the parameters of the model, ALPHA and TM
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
-    fgmask_video_file = os.path.join(OUTPUT_PATH, f'op_fg_{ALPHA}_{TM}.avi')
-    fgmask_video_writer = cv2.VideoWriter(
-        fgmask_video_file, fourcc, 10, (im.shape[1], im.shape[0]))
+            video_file = os.path.join(OUTPUT_PATH, f'op_{ALPHA}_{TM}.avi')
+            video_writer = cv2.VideoWriter(
+                video_file, fourcc, 10, (im.shape[1], im.shape[0]))
 
-    # Main loop
-    for fr in range(n):
-        # Read the image
-        im = cv2.imread(os.path.join(INPUT_PATH, flist[fr]))
+            bgmean_video_file = os.path.join(
+                OUTPUT_PATH, f'op_bg_{ALPHA}_{TM}.avi')
+            bgmean_video_writer = cv2.VideoWriter(
+                bgmean_video_file, fourcc, 10, (im.shape[1], im.shape[0]))
 
-        # Classify the foreground using the model & Update the model with the new image
-        fg_mask = bg_model.classify(im)
-        bg_model.update(im)
+            fgmask_video_file = os.path.join(
+                OUTPUT_PATH, f'op_fg_{ALPHA}_{TM}.avi')
+            fgmask_video_writer = cv2.VideoWriter(
+                fgmask_video_file, fourcc, 10, (im.shape[1], im.shape[0]))
 
-        # Display the input frame, background model, and foreground mask
-        cv2.imshow('Input Frame', im)
-        cv2.imshow('Background Model', bg_model.mean.astype('uint8'))
-        cv2.imshow('Foreground Mask', fg_mask)
+            # Main loop
+            for fr in range(n):
+                # Read the image
+                im = cv2.imread(os.path.join(INPUT_PATH, flist[fr]))
 
-        # Press 'q' to exit the loop
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+                # Classify the foreground using the model & Update the model with the new image
+                fg_mask = bg_model.classify(im)
+                bg_model.update(im)
 
-        # Save the results for specific frames
-        if fr in [5, 100, 400]:
-            fname = f'FGmask_{ALPHA}_{TM}_{flist[fr]}'
-            fname_wpath = os.path.join(OUTPUT_PATH, fname)
-            cv2.imwrite(fname_wpath, fg_mask)
+                # Display the input frame, background model, and foreground mask
+                # add frame number, ALPHA, and TM to the top left of the image
+                im_draw = im.copy()
+                cv2.putText(im_draw, f'Frame {fr+1}/{n}', (im.shape[1]//15, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+                cv2.putText(im_draw, f'ALPHA = {ALPHA}, TM = {TM}', (im.shape[1]//15, 40),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
-            fname = f'BGmean_{ALPHA}_{TM}_{flist[fr]}'
-            fname_wpath = os.path.join(OUTPUT_PATH, fname)
-            cv2.imwrite(fname_wpath, bg_model.mean.astype('uint8'))
+                bg_draw = bg_model.mean.astype('uint8')
+                cv2.putText(bg_draw, f'Frame {fr+1}/{n}', (im.shape[1]//15, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+                cv2.putText(bg_draw, f'ALPHA = {ALPHA}, TM = {TM}', (im.shape[1]//15, 40),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
-        # Write the current frame and FGmask to the videos
-        video_writer.write(im)
-        fgmask_video_writer.write(fg_mask)
+                fg_draw = fg_mask.copy()
+                cv2.putText(fg_draw, f'Frame {fr+1}/{n}', (im.shape[1]//15, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                cv2.putText(fg_draw, f'ALPHA = {ALPHA}, TM = {TM}', (im.shape[1]//15, 40),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-    video_writer.release()
-    fgmask_video_writer.release()
-    cv2.destroyAllWindows()
+                cv2.imshow('Input Frame', im_draw)
+                cv2.imshow('Background Model', bg_draw)
+                cv2.imshow('Foreground Mask', fg_draw)
+
+                # Press 'q' to exit the loop
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+                # Save the results for specific frames
+                if fr in [5, 100, 400]:
+                    fname = f'FGmask_{ALPHA}_{TM}_{flist[fr]}'
+                    fname_wpath = os.path.join(OUTPUT_PATH, fname)
+                    cv2.imwrite(fname_wpath, fg_draw)
+
+                    fname = f'BGmean_{ALPHA}_{TM}_{flist[fr]}'
+                    fname_wpath = os.path.join(OUTPUT_PATH, fname)
+                    cv2.imwrite(fname_wpath, bg_draw)
+
+                # Write the current frame and FGmask to the videos
+                video_writer.write(im_draw)
+                bgmean_video_writer.write(bg_draw)
+                fgmask_video_writer.write(fg_draw)
+
+                # Print the progress using the same line
+                print(f'Frame {fr+1}/{n}', end='\r')
+
+            video_writer.release()
+            fgmask_video_writer.release()
+            cv2.destroyAllWindows()
+            # print the status
+            print('Done                    \n')
 
 
 if __name__ == '__main__':
     main()
+
 
 # %%
