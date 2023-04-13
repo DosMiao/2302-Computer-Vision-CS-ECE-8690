@@ -38,31 +38,6 @@ def unify_contrast_brightness(image):
     return equalized
 
 
-def unify_image(img, clip_limit=2.0, tile_size=8, brightness=128, contrast=1.0, detail_level=1.0):
-    # Convert to LAB color space
-    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-
-    # Split channels
-    l, a, b = cv2.split(lab)
-
-    # Apply CLAHE to the L channel
-    clahe = cv2.createCLAHE(clipLimit=clip_limit,
-                            tileGridSize=(tile_size, tile_size))
-    l = clahe.apply(l)
-
-    # Apply brightness and contrast adjustments to the L channel
-    l = cv2.addWeighted(l, contrast, np.zeros_like(l), 0, brightness - 128)
-
-    # Apply detail level adjustment to the L channel
-    l = cv2.GaussianBlur(l, (0, 0), sigmaX=(1 - detail_level) * 20 + 1)
-
-    # Merge channels and convert back to BGR color space
-    lab = cv2.merge((l, a, b))
-    out = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-
-    return out
-
-
 def auto_correlation_matrix(image, window_size=3):
 
     # Compute the derivatives of the image using Sobel kernels
@@ -92,13 +67,10 @@ def preprocess_image(image):
     # Apply contrast and brightness enhancement
     enhanced_image = unify_contrast_brightness(blurred_img)
 
-    # Apply CLAHE, brightness, and contrast adjustments
-    unified_image = unify_image(enhanced_image)
-
     # Compute the auto-correlation matrix
-    auto_corr_matrix = auto_correlation_matrix(unified_image)
+    auto_corr_matrix = auto_correlation_matrix(enhanced_image)
 
-    return unified_image, auto_corr_matrix
+    return enhanced_image, auto_corr_matrix
 
 
 def DetectAndCompute(image, max_points):
@@ -139,13 +111,11 @@ def analyze_features(features):
     # Analyze the features to determine particle size, distribution, and color value
 
     # Calculate particle size statistics
-    particle_sizes = features["areas"]
-    mean_size = np.mean(particle_sizes)
-    std_dev_size = np.std(particle_sizes)
+    mean_size = features["mean_area"]  # Use 'mean_area' instead of 'areas'
+    std_dev_size = np.std(features["mean_area"])
 
     # Calculate color value statistics
-    colors = features["colors"]
-    mean_color = features["avg_color"]
+    mean_color = features["mean_color"]
 
     # Create a dictionary to store the results
     results = {
@@ -166,15 +136,13 @@ def display_results(results):
         f"Standard Deviation of Particle Size: {results['std_dev_size']:.2f}")
     print(f"Mean Color Value (B, G, R): {tuple(results['mean_color'])}")
 
-    # Alternatively, you can create a more advanced user interface using a library like Tkinter or PyQt.
-
 
 def main():
     # Step 1: Image Acquisition
     images = load_images(IMAGE_DIR)
 
     # Step 2: Image Preprocessing
-    preprocessed_images = [preprocess_image(img) for img in images]
+    preprocessed_images = [preprocess_image(img)[0] for img in images]
 
     # Step 3: Feature Extraction
     feature_list = [extract_features(img) for img in preprocessed_images]
