@@ -1,4 +1,4 @@
-#pylint disable=all
+# pylint disable=all
 if __name__ == '__main__':
     import torch
     import torchvision
@@ -17,27 +17,27 @@ if __name__ == '__main__':
     # Define image transformations
     transform = transforms.Compose(
         [transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # Set batch size
-    batch_size = 4
+    batch_size = 50
     epoch_num = 4
     disp_interval = batch_size*50
     batch_size_show = 8
 
-    if batch_size<10:
-        disp_interval*=2
+    if batch_size < 10:
+        disp_interval *= 2
 
-        if device!='cpu':
+        if device != 'cpu':
             device = torch.device('cpu')
-            print(f"Change to use device: {device}"+" because batch size is too small")
+            print(f"Change to use device: {device}" +
+                  " because batch size is too small")
 
     folder_path = './CV2023_HW3B/'
     model_path = folder_path+'N3_cifar_net.pth'
-    img1_path  = folder_path+'img/N3_img1.png'
-    img2_path  = folder_path+'img/N3_img2.png'
-    img3_path  = folder_path+'img/N3_img3.png'
-
+    img1_path = folder_path+'img/N3_img1.png'
+    img2_path = folder_path+'img/N3_img2.png'
+    img3_path = folder_path+'img/N3_img3.png'
 
     # Load training set
     trainset = torchvision.datasets.CIFAR10(
@@ -46,7 +46,8 @@ if __name__ == '__main__':
     trainset.targets = np.array(trainset.targets)
     trainset.data = trainset.data[trainset.targets < 4]
     trainset.targets = trainset.targets[trainset.targets < 4]
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+    trainloader = torch.utils.data.DataLoader(
+        trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
     # Load test set
     testset = torchvision.datasets.CIFAR10(
@@ -55,8 +56,10 @@ if __name__ == '__main__':
     testset.targets = np.array(testset.targets)
     testset.data = testset.data[testset.targets < 4]
     testset.targets = testset.targets[testset.targets < 4]
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
-    testloader_show = torch.utils.data.DataLoader(testset, batch_size=batch_size_show, shuffle=False, num_workers=2)
+    testloader = torch.utils.data.DataLoader(
+        testset, batch_size=batch_size, shuffle=False, num_workers=2)
+    testloader_show = torch.utils.data.DataLoader(
+        testset, batch_size=batch_size_show, shuffle=False, num_workers=2)
 
     # Define classes
     classes = ('cat', 'car', 'frog', 'other')
@@ -98,8 +101,9 @@ if __name__ == '__main__':
             self.pool = nn.MaxPool2d(2, 2)
             self.conv2 = nn.Conv2d(6, 16, 5)
             self.conv3 = nn.Conv2d(16, 32, 5, padding=2)
-            self.fc1 = nn.Linear(32* 2 * 2 , 120) 
-            self.fc2 = nn.Linear(120, 4) # change the number of output classes to 4
+            self.fc1 = nn.Linear(32 * 2 * 2, 120)
+            # change the number of output classes to 4
+            self.fc2 = nn.Linear(120, 4)
 
         def forward(self, x):
             x = self.pool(F.relu(self.conv1(x)))
@@ -111,25 +115,25 @@ if __name__ == '__main__':
             x = self.fc2(x)
             return x
 
-    if 1: 
-    #if not os.path.exists(model_path):
+    if 1:
+        # if not os.path.exists(model_path):
         # Instantiate the neural network and move it to GPU
         net = Net().to(device)
 
         # Define the loss function and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-        #optimizer = optim.Adam(net.parameters(), lr=0.001)
+        # optimizer = optim.Adam(net.parameters(), lr=0.001)
 
         loss_history = []
         # Train the neural network
         start_time = time.time()  # Record the start time
 
         for epoch in range(epoch_num):  # loop over the dataset multiple times
-            
-            epoch_start_time = time.time() 
+
+            epoch_start_time = time.time()
             running_loss = 0.0
-            
+
             for i, data in enumerate(trainloader, 0):
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data
@@ -148,13 +152,16 @@ if __name__ == '__main__':
                 # print statistics
                 running_loss += loss.item()
                 if i % disp_interval == disp_interval-1:    # print every disp_interval mini-batches
-                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / disp_interval:.3f}')
+                    print(
+                        f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / disp_interval:.3f}')
                     loss_history.append(running_loss / disp_interval)
                     plot_loss(loss_history, epoch, i)
                     running_loss = 0.0
-                    
-            epoch_elapsed_time = time.time() - epoch_start_time  # Calculate the elapsed time for the epoch
-            print(f'Time taken for epoch {epoch + 1}: {epoch_elapsed_time:.2f} seconds')
+
+            # Calculate the elapsed time for the epoch
+            epoch_elapsed_time = time.time() - epoch_start_time
+            print(
+                f'Time taken for epoch {epoch + 1}: {epoch_elapsed_time:.2f} seconds')
 
         print('Finished Training')
 
@@ -171,7 +178,7 @@ if __name__ == '__main__':
     dataiter = iter(testloader_show)
     images, labels = next(dataiter)
     images, labels = images.to(device), labels.to(device)
-    im_show(torchvision.utils.make_grid(images),img1_path)
+    im_show(torchvision.utils.make_grid(images), img1_path)
     print('GroundTruth: ', ' '.join(
         f'{classes[labels[j]]:5s}' for j in range(batch_size_show)))
 
@@ -190,7 +197,7 @@ if __name__ == '__main__':
     total = 0
     with torch.no_grad():
         for data in testloader_show:
-            images, labels = data; 
+            images, labels = data
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
             _, predicted = torch.max(outputs.data, 1)
@@ -209,7 +216,7 @@ if __name__ == '__main__':
         for data in testloader_show:
             images, labels = data
             images, labels = images.to(device), labels.to(device)
-            outputs =net(images)
+            outputs = net(images)
             _, predictions = torch.max(outputs, 1)
             # collect the correct predictions for each class
             for label, prediction in zip(labels, predictions):
@@ -222,7 +229,7 @@ if __name__ == '__main__':
         print(f'Accuracy for class: {classname:5s} is {accuracy:.1f} %')
 
     # create confusion matrix
-    classes = ['cat', 'car', 'frog', 'other'] # update classes list
+    classes = ['cat', 'car', 'frog', 'other']  # update classes list
     conf_matrix = np.zeros((4, 4))
     with torch.no_grad():
         for data in testloader_show:
@@ -233,12 +240,12 @@ if __name__ == '__main__':
             for i in range(len(labels)):
                 true_label = labels[i].item()
                 predicted_label = predicted[i].item()
-                if true_label < 3 and predicted_label < 3: # if true label and predicted label are in the 0-2 range
+                if true_label < 3 and predicted_label < 3:  # if true label and predicted label are in the 0-2 range
                     conf_matrix[true_label][predicted_label] += 1
-                elif true_label >= 3 and predicted_label >= 3: # if true label and predicted label are in the 3-9 range
+                elif true_label >= 3 and predicted_label >= 3:  # if true label and predicted label are in the 3-9 range
                     conf_matrix[3][3] += 1
-                else: # if true label is in the 0-2 range and predicted label is in the 3-9 range, or vice versa
-                    conf_matrix[true_label%3][3] += 1
+                else:  # if true label is in the 0-2 range and predicted label is in the 3-9 range, or vice versa
+                    conf_matrix[true_label % 3][3] += 1
 
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.5)
@@ -257,4 +264,4 @@ if __name__ == '__main__':
     plt.savefig(img3_path)
     plt.show(block=False)   # show the image without blocking the code
     plt.pause(2)            # pause the code execution for 1 second
-    plt.close()      
+    plt.close()
