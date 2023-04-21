@@ -14,15 +14,16 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     # Define image transformations
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # Set batch size
-    batch_size = 4
-    epoch_num = 4
-    disp_interval = batch_size*50
+    batch_size = 10
+    epoch_num = 10
+    disp_interval = batch_size*25
     batch_size_show = 8
 
     # make a if batch_size<10 and device is not 'cpu'
@@ -31,6 +32,7 @@ if __name__ == '__main__':
 
         if device != 'cpu':
             device = torch.device('cpu')
+
             print(f"Change to use device: {device}" +
                   " because batch size is too small")
 
@@ -92,7 +94,7 @@ if __name__ == '__main__':
 
     # Display images and labels
     # im_show(torchvision.utils.make_grid(images))
-    #print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size_show)))
+    # print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size_show)))
 
     # Define the neural network
     class Net(nn.Module):
@@ -122,7 +124,7 @@ if __name__ == '__main__':
         # Define the loss function and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-        #optimizer = optim.Adam(net.parameters(), lr=0.001)
+        # optimizer = optim.Adam(net.parameters(), lr=0.001)
 
         loss_history = []
         # Train the neural network
