@@ -16,7 +16,8 @@ for i = 1:length(images)
     [auto_rr_xx, auto_rr_yy, auto_rr_xy] = auto_correlation_matrix(grayimg, 3);
 
     % Define sharpening filter
-    sharpen_filter = [0 -1 0; -1 5 -1; 0 -1 0];
+    %sharpen_filter = [0 -1 0; -1 5 -1; 0 -1 0];
+    sharpen_filter = [0 0 0 0 0; 0 0 -1 0 0; 0 -1 5 -1 0; 0 0 -1 0 0; 0 0 0 0 0];
 
     % Apply sharpening filter to auto-correlation matrices
     auto_rr_xx_sharp = imfilter(auto_rr_xx, sharpen_filter);
