@@ -40,6 +40,8 @@ def unify_contrast_brightness(image):
 
 def auto_correlation_matrix(image, window_size=3):
 
+    image = image.astype(np.uint16)
+
     # Compute the derivatives of the image using Sobel kernels
     Ix = cv2.Sobel(image, cv2.CV_32F, 1, 0, ksize=3)
     Iy = cv2.Sobel(image, cv2.CV_32F, 0, 1, ksize=3)
@@ -48,6 +50,7 @@ def auto_correlation_matrix(image, window_size=3):
     auto_rr_matrix_xx = cv2.GaussianBlur(Ix**2, (window_size, window_size), 0)
     auto_rr_matrix_yy = cv2.GaussianBlur(Iy**2, (window_size, window_size), 0)
     auto_rr_matrix_xy = cv2.GaussianBlur(Ix*Iy, (window_size, window_size), 0)
+    auto_rr_matrix_xy = np.abs(auto_rr_matrix_xy - np.mean(auto_rr_matrix_xy))
 
     auto_rr_matrix = [auto_rr_matrix_xx, auto_rr_matrix_yy, auto_rr_matrix_xy]
 
@@ -59,18 +62,29 @@ def preprocess_image(image):
     lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
 
     # Split the Lab image into L, a, and b channels
-    L_channel, _, _ = cv2.split(lab_img)
+    # L_channel
+    L_channel = cv2.split(lab_img)
 
-    # Apply Gaussian blur to reduce noise
-    blurred_img = cv2.GaussianBlur(L_channel, (3, 3), 0)
+    blurnum = 12
+    blurlist = [1, 3, 5, 9, 13, 19, 25, 31, 37, 43, 49, 55]
 
-    # Apply contrast and brightness enhancement
-    enhanced_image = unify_contrast_brightness(blurred_img)
+    _img = np.zeros((blurnum, image.shape[0], image.shape[1]))
+    for i in range(blurnum):
+        _img[i] = cv2.GaussianBlur(L_channel[0], (blurlist[i], blurlist[i]), 0)
 
     # Compute the auto-correlation matrix
-    auto_corr_matrix = auto_correlation_matrix(enhanced_image)
+    auto_corr_matrix = np.zeros((blurnum, 3, image.shape[0], image.shape[1]))
+    for i in range(blurnum):
+        auto_corr_matrix[i] = auto_correlation_matrix(_img[i])
 
-    return enhanced_image, auto_corr_matrix
+    fig, axs = plt.subplots(3, 4, figsize=(26, 13))
+    for i in range(blurnum):
+        axs[i//4, i % 4].imshow(auto_corr_matrix[i, 2], cmap='gray')
+        axs[i//4, i % 4].set_title('Gaussian Blur %d' % blurlist[i])
+
+    plt.show()
+
+    return _img, auto_corr_matrix
 
 
 def DetectAndCompute(image, max_points):
