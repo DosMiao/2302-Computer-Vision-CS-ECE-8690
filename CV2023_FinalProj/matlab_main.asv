@@ -1,0 +1,79 @@
+close all
+IMAGE_DIR = "./testData_1/";
+% Step 1: Image Acquisition
+images = load_images(IMAGE_DIR);
+
+% Set up figure window
+
+% Loop over each image
+for i = 1:length(images)
+    % Load the image and convert to grayscale
+    fig = figure('Position', [0 0 1200 960]);
+    img = images{i};
+    grayimg = rgb2gray(img);
+
+    % Apply Gaussian filter to compute auto-correlation matrix
+    [auto_rr_xx, auto_rr_yy, auto_rr_xy] = auto_correlation_matrix(grayimg, 3);
+
+    fft_rows_xx = zeros(size(grayimg));
+    fft_rows_yy = zeros(size(grayimg));
+    fft_rows_xy = zeros(size(grayimg));
+    fft_rows = zeros(size(grayimg));
+
+    % Compute FFT of each row of the auto-correlation matrix for xx component
+    for j = 1:size(grayimg, 1)
+        fft_rows_xx(j, :) = fft(auto_rr_xx(j, :));
+        fft_rows_xy(j, :) = fft(auto_rr_xy(j, :));
+    end
+
+    % Compute the average magnitude spectrum across all rows for xx component
+    fft_xx = sum(real(fft_rows_xx), 1) / size(grayimg, 1);
+    fft_xy = sum(real(fft_rows_xy), 1) / size(grayimg, 1);
+    % Smooth the xx component curve
+    fft_xx_smoothed = smoothdata(fft_xx, 'gaussian', 5);
+    fft_xy_smoothed = smoothdata(fft_xy, 'gaussian', 5);
+
+    % Compute FFT of each column of the auto-correlation matrix for yy component
+    for j = 1:size(grayimg, 2)
+        fft_rows_yy(:, j) = fft(auto_rr_yy(:, j));
+    end
+
+    % Compute the average magnitude spectrum across all columns for yy component
+    fft_yy = sum(real(fft_rows_yy), 2) / size(grayimg, 2);
+    % Smooth the yy component curve
+    fft_yy_smoothed = smoothdata(fft_yy, 'gaussian', 5);
+
+    fft_combined = (fft_xx_smoothed(size(fft_xx_smoothed(:)) - 200:end) / size(grayimg, 1) * size(grayimg, 2) ...
+        + fft_yy_smoothed(size(fft_yy_smoothed(:)) - 200:end)' + fft_xy_smoothed(size(fft_xy_smoothed(:)) - 200:end)) / 3;
+
+    % Plot the original image
+    subplot(2, 2, 1);
+    imshow(img);
+    title(sprintf('Image %d', i));
+
+    % Plot the auto-correlation matrix
+    subplot(2, 2, 2);
+    imshow(auto_rr_xx, []);
+    title(sprintf('Auto-correlation Matrix of Image %d', i));
+
+    % Plot the FFT spectra
+    fpn = 49; % frequency points number
+    subplot(2, 2, [3, 4]);
+    plot((0:fpn) / 2 + 1, abs(fft_combined(size(fft_combined(:)):-1:size(fft_combined(:)) - fpn)) .* [1:50], 'LineWidth', 3);
+    hold on;
+    plot((0:fpn) / 2 + 1, abs(fft_yy_smoothed(size(fft_yy_smoothed(:)):-1:size(fft_yy_smoothed(:)) - fpn)) .* [1:50], 'LineWidth', 0.5);
+    plot((0:fpn) / 2 + 1, abs(fft_xy_smoothed(size(fft_xy_smoothed(:)):-1:size(fft_xy_smoothed(:)) - fpn)) .* [1:50], 'LineWidth', 0.5);
+    plot((0:fpn) / 2 + 1, abs(fft_xx_smoothed(size(fft_xx_smoothed(:)):-1:size(fft_xx_smoothed(:)) - fpn)) .* [1:50], 'LineWidth', 0.5);
+
+    hold off;
+    ylim([0 1e6]);
+    xlim([1 25]);
+
+    title(sprintf('FFT Spectrum of Image %d', i));
+    legend('combined fft', 'yy fft', 'xy fft', 'xx fft', 'Location', 'NorthEast', 'FontSize', 16);
+
+    fig_name = sprintf('./figure/Res_%d.svg', i);
+    print(fig, fig_name, '-dsvg');
+    func_svg_transparent(fig_name);
+    close(fig.Number);
+end

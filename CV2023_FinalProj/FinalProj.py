@@ -47,12 +47,12 @@ def auto_correlation_matrix(image, window_size=3):
     Iy = cv2.Sobel(image, cv2.CV_32F, 0, 1, ksize=3)
 
     # Compute the elements of the structure tensor
-    auto_rr_matrix_xx = cv2.GaussianBlur(Ix**2, (window_size, window_size), 0)
-    auto_rr_matrix_yy = cv2.GaussianBlur(Iy**2, (window_size, window_size), 0)
-    auto_rr_matrix_xy = cv2.GaussianBlur(Ix*Iy, (window_size, window_size), 0)
-    auto_rr_matrix_xy = np.abs(auto_rr_matrix_xy - np.mean(auto_rr_matrix_xy))
+    auto_rr_xx = cv2.GaussianBlur(Ix**2, (window_size, window_size), 0)
+    auto_rr_yy = cv2.GaussianBlur(Iy**2, (window_size, window_size), 0)
+    auto_rr_xy = cv2.GaussianBlur(Ix*Iy, (window_size, window_size), 0)
+    auto_rr_xy = np.abs(auto_rr_xy - np.mean(auto_rr_xy))
 
-    auto_rr_matrix = [auto_rr_matrix_xx, auto_rr_matrix_yy, auto_rr_matrix_xy]
+    auto_rr_matrix = [auto_rr_xx, auto_rr_yy, auto_rr_xy]
 
     return auto_rr_matrix
 
@@ -155,6 +155,25 @@ def main():
     # Step 1: Image Acquisition
     images = load_images(IMAGE_DIR)
 
+    fig = plt.figure(figsize=(21, 5))
+
+    for i in range(len(images)):
+        # Apply 3D FFT
+        f = np.fft.fftn(images[i])
+        # Shift zero frequency component to the center
+        fshift = np.fft.fftshift(f)
+        # Compute magnitude spectrum
+        magnitude_spectrum = 20 * np.log(np.abs(fshift))
+        # Normalize magnitude spectrum values to range [0, 1]
+        magnitude_spectrum = magnitude_spectrum / 255.0
+
+        # Display original and transformed images
+        plt.subplot(2, 7, i+1), plt.imshow(images[i], cmap='gray')
+        plt.title(f'Image {i+1}'), plt.xticks([]), plt.yticks([])
+        plt.subplot(2, 7, i+8), plt.imshow(magnitude_spectrum, cmap='gray')
+        plt.title(f'Spectrum {i+1}'), plt.xticks([]), plt.yticks([])
+        # Display the images and their spectra
+    plt.show()
     # Step 2: Image Preprocessing
     preprocessed_images = [preprocess_image(img)[0] for img in images]
 
