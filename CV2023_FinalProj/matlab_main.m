@@ -88,3 +88,55 @@ for i = 1:length(images)
     func_svg_transparent(fig_name);
     close(fig.Number);
 end
+
+function images = load_images(directory)
+    % Load images from the directory
+    files = dir(fullfile(directory, '*.jpg'));
+    files = [files; dir(fullfile(directory, '*.jpeg'))];
+    files = [files; dir(fullfile(directory, '*.png'))];
+    images = cell(length(files), 1);
+
+    for i = 1:length(files)
+        img_path = fullfile(directory, files(i).name);
+        img = imread(img_path);
+        images{i} = img;
+    end
+
+end
+
+function [auto_rr_matrix_xx, auto_rr_matrix_yy, auto_rr_matrix_xy] = auto_correlation_matrix(image, window_size)
+% Compute the auto-correlation matrix of an image using the structure tensor
+% method.
+
+    image = uint16(image);
+
+    % Compute the derivatives of the image using Sobel kernels
+    Ix = imfilter(image, [-1 0 1; -2 0 2; -1 0 1], 'replicate');
+    Iy = imfilter(image, [-1 -2 -1; 0 0 0; 1 2 1], 'replicate');
+
+    % Compute the elements of the structure tensor
+    auto_rr_matrix_xx = imgaussfilt(Ix.^2, window_size);
+    auto_rr_matrix_yy = imgaussfilt(Iy.^2, window_size);
+    auto_rr_matrix_xy = imgaussfilt(Ix.*Iy, window_size);
+    auto_rr_matrix_xy = abs(auto_rr_matrix_xy - mean(auto_rr_matrix_xy(:)));
+
+end
+
+function func_svg_transparent(filename)
+    % Read the input SVG file
+    file_content = fileread(filename);
+
+    % Replace all occurrences of 'white' with 'none'
+    modified_content = strrep(file_content, 'white', 'none');
+
+    % Write the modified content to a new SVG file
+    file_id = fopen(filename, 'w');
+
+    if file_id == -1
+        error('Could not create the output file');
+    end
+
+    fprintf(file_id, '%s', modified_content);
+    fclose(file_id);
+end
+
